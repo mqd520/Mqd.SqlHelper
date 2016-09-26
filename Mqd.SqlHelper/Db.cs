@@ -2,6 +2,9 @@
 using System.Data;
 using System.Data.Common;
 using System.Configuration;
+using System.Reflection;
+using System.Linq;
+using System.Collections.Generic;
 
 namespace Mqd.SqlHelper
 {
@@ -107,6 +110,11 @@ namespace Mqd.SqlHelper
             return ds;
         }
 
+        public DbParameter CreateParameter()
+        {
+            return _factory.CreateParameter();
+        }
+
         public DataSet GetDataSet(string sql, DbParameter[] paras = null)
         {
             return Query(sql, paras: paras);
@@ -156,6 +164,42 @@ namespace Mqd.SqlHelper
                 }
             }
             return n;
+        }
+
+        public int Insert<T>(T entity, List<PropertyInfo> where = null)
+        {
+            Type t = entity.GetType();
+            PropertyInfo[] pis = t.GetProperties();
+            List<DbParameter> paras = new List<DbParameter>();
+            string fields = "";
+            string values = "";
+            foreach (var item in pis)
+            {
+                bool flag = false;
+                object o = item.GetValue(entity);
+                if (o != null)
+                {
+                    if (where == null)
+                    {
+                        flag = true;
+                    }
+                    else if (where.Contains(item))
+                    {
+                        flag = true;
+                    }
+                }
+                if (flag)
+                {
+                    fields += string.Format(",{0}", item.Name);
+                    values += string.Format(",@{0}", item.Name);
+                    DbParameter para = CreateParameter();
+                    para.ParameterName = "@" + item.Name;
+                    para.Value = o;
+                    paras.Add(para);
+                }
+            }
+            string sql = string.Format("insert into {0}({1}) values({2})", t.Name, fields.Substring(1), values.Substring(1));
+            return ExecuteNonQuery(sql, paras.ToArray());
         }
     }
 }

@@ -8,6 +8,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using System.Data.Common;
+using System.Reflection;
 using Mqd.SqlHelper;
 using Mqd.SqlHelper.Entity;
 
@@ -113,6 +114,18 @@ namespace Mqd.SqlHelper.Demo
             };
             DataTable dt = _db.ExecuteStoreProcedure("CustOrdersDetail", paras);
             Tool.FillListView(dt, listView1);
+        }
+
+        private void button6_Click(object sender, EventArgs e)
+        {
+            int result = _db.Insert<Customers>(new Customers
+            {
+                CustomerID = "hcdus",
+                CompanyName = "CompanyName:djksjdksjdksj",
+                Address = "sdsdsds",
+                Country = "sdsdsds"
+            });
+            Console.WriteLine(result);
         }
     }
 }

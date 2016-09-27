@@ -115,6 +115,21 @@ namespace Mqd.SqlHelper
             return _factory.CreateParameter();
         }
 
+        public DbParameter CreateParameter(string paraName, object value = null, int size = 0, DbType type = (DbType)(-1),
+            ParameterDirection direction = ParameterDirection.Input)
+        {
+            DbParameter para = _factory.CreateParameter();
+            para.ParameterName = paraName;
+            para.Direction = direction;
+            para.Size = 0;
+            para.Value = value;
+            if ((int)type != -1)
+            {
+                para.DbType = type;
+            }
+            return para;
+        }
+
         public DataSet GetDataSet(string sql, DbParameter[] paras = null)
         {
             return Query(sql, paras: paras);

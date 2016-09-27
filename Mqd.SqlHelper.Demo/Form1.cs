@@ -9,6 +9,8 @@ using System.Threading.Tasks;
 using System.Windows.Forms;
 using System.Data.Common;
 using System.Reflection;
+using System.IO;
+using Mqd.SqlHelper.Demo.Properties;
 using Mqd.SqlHelper;
 using Mqd.SqlHelper.Entity;
 
@@ -25,32 +27,25 @@ namespace Mqd.SqlHelper.Demo
 
         private void button1_Click(object sender, EventArgs e)
         {
-            DbParameter[] paras = new DbParameter[] { 
-                new System.Data.SqlClient.SqlParameter{
-                     ParameterName="@OrderID",
-                      Value="10248"
-                }
-            };
-            DataTable dt = _db.GetTable("select * from Orders where OrderID=@OrderID", paras);
+            DataTable dt = _db.GetTable("select * from Orders where OrderID=@OrderID", new DbParameter[]{
+                _db.CreateParameter("OrderID","10248")
+            });
             Tool.FillListView(dt, listView1);
         }
 
         private void button2_Click(object sender, EventArgs e)
         {
-            System.IO.FileStream fs = System.IO.File.Open(@"D:\download\狼来了.png",
-                System.IO.FileMode.Open, System.IO.FileAccess.Read, System.IO.FileShare.Read);
-            byte[] buffer = new byte[fs.Length];
-            fs.Read(buffer, 0, buffer.Length);
-            fs.Close();
-            System.Data.SqlClient.SqlParameter[] paras = new System.Data.SqlClient.SqlParameter[1];
-            System.Data.SqlClient.SqlParameter para = new System.Data.SqlClient.SqlParameter();
-            para.DbType = (DbType)SqlDbType.Binary;
-            para.Size = buffer.Length;
-            para.Value = buffer;
-            para.ParameterName = "@Picture";
-            paras[0] = para;
-            string sql = "insert into Categories(CategoryName,Description,Picture) values('狼来了','狼来了',@Picture)";
-            int n = _db.ExecuteNonQuery(sql, paras);
+            MemoryStream ms = new MemoryStream();
+            Resources.Langlaile.Save(ms, Resources.Langlaile.RawFormat);
+            byte[] buffer = new byte[ms.Length];
+            ms.Read(buffer, 0, buffer.Length);
+            ms.Close();
+            string sql = "insert into Categories(CategoryName,Description,Picture) values(@CategoryName,@Description,@Picture)";
+            int n = _db.ExecuteNonQuery(sql, new DbParameter[]{
+                _db.CreateParameter("@CategoryName","狼来了"),
+                _db.CreateParameter("@Description","狼来了"),
+                _db.CreateParameter("@Picture",buffer)
+            });
         }
 
         private void fun1()
@@ -106,13 +101,9 @@ namespace Mqd.SqlHelper.Demo
 
         private void button5_Click(object sender, EventArgs e)
         {
-            DbParameter[] paras = new DbParameter[] { 
-                new System.Data.SqlClient.SqlParameter{
-                     ParameterName="@OrderID",
-                      Value="10248"
-                }
-            };
-            DataTable dt = _db.ExecuteStoreProcedure("CustOrdersDetail", paras);
+            DataTable dt = _db.ExecuteStoreProcedure("CustOrdersDetail", new DbParameter[]{
+                _db.CreateParameter("@OrderID","10248")
+            });
             Tool.FillListView(dt, listView1);
         }
 
@@ -126,6 +117,25 @@ namespace Mqd.SqlHelper.Demo
                 Country = "sdsdsds"
             });
             Console.WriteLine(result);
+        }
+
+        private void button7_Click(object sender, EventArgs e)
+        {
+            string sql = "delete from Categories where CategoryID=@CategoryID";
+            int n = _db.ExecuteNonQuery(sql, new DbParameter[]{
+                _db.CreateParameter("@CategoryID",14)
+            });
+        }
+
+        private void button8_Click(object sender, EventArgs e)
+        {
+            DbParameter[] paras = new DbParameter[]{
+                _db.CreateParameter("@customerID",type:DbType.String,value:"AROUT"),
+                _db.CreateParameter("@count",type:DbType.Int32,direction:ParameterDirection.Output)
+            };
+            DataTable dt = _db.ExecuteStoreProcedure("Customer1", paras);
+            Tool.FillListView(dt, listView1);
+            Console.WriteLine(paras[1].Value);
         }
     }
 }

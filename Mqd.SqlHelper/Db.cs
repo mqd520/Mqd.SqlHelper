@@ -60,11 +60,16 @@ namespace Mqd.SqlHelper
         }
 
         /// <summary>
-        /// 关闭连接对象
+        /// 释放相关资源
         /// </summary>
-        private void CloseConnection(DbConnection conn)
+        /// <param name="cmd">DbCommand</param>
+        private void Dispose(DbCommand cmd)
         {
-            conn.Close();
+            cmd.Parameters.Clear();
+            if (cmd.Connection != null && cmd.Connection.State == ConnectionState.Open)
+            {
+                cmd.Connection.Close();
+            }
         }
 
         /// <summary>
@@ -106,17 +111,12 @@ namespace Mqd.SqlHelper
                 {
                     conn.Open();
                     adapter.Fill(ds);
+                    Dispose(cmd);
                 }
                 catch (Exception e)
                 {
+                    Dispose(cmd);
                     throw e;
-                }
-                finally
-                {
-                    if (conn.State == ConnectionState.Open)
-                    {
-                        conn.Close();
-                    }
                 }
             }
             return ds;
@@ -217,14 +217,8 @@ namespace Mqd.SqlHelper
                 }
                 catch (Exception e)
                 {
+                    Dispose(cmd);
                     throw e;
-                }
-                finally
-                {
-                    if (conn.State == ConnectionState.Open)
-                    {
-                        conn.Close();
-                    }
                 }
             }
             return n;

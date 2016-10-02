@@ -6,6 +6,9 @@ using System.Linq;
 
 namespace Mqd.SqlHelper
 {
+    /// <summary>
+    /// 
+    /// </summary>
     public static class Tool
     {
         private static PropertyInfo[] Mapping(PropertyInfo[] pi, DataColumnCollection cols)
@@ -30,6 +33,12 @@ namespace Mqd.SqlHelper
             return result;
         }
 
+        /// <summary>
+        /// 将DataTable转换成相应的实体类型
+        /// </summary>
+        /// <typeparam name="T">实体类型</typeparam>
+        /// <param name="dt">要转换的DataTable</param>
+        /// <returns>转换后的实体数据集合</returns>
         public static List<T> ToList<T>(this DataTable dt) where T : new()
         {
             List<T> list = new List<T>();

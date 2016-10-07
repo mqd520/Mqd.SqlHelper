@@ -24,6 +24,15 @@ namespace Mqd.SqlHelper
         private readonly DbProviderFactory _factory;
 
         /// <summary>
+        /// 默认存储过程返回值参数名
+        /// </summary>
+        private const string _SPReturnValueName = "@RETURN_VALUE";
+        /// <summary>
+        /// 存储过程返回值
+        /// </summary>
+        private object _SPReturnValue = null;
+
+        /// <summary>
         /// 使用指定数据库连接对象创建数据库连接
         /// </summary>
         /// <param name="css">数据库连接对象</param>
@@ -73,6 +82,22 @@ namespace Mqd.SqlHelper
         }
 
         /// <summary>
+        /// 设置存储过程返回值
+        /// </summary>
+        /// <param name="collection">参数集合</param>
+        private void SetSPReturnValue(DbParameterCollection collection)
+        {
+            if (collection != null)
+            {
+                DbParameter para = collection[_SPReturnValueName];
+                if (para != null)
+                {
+                    _SPReturnValue = para.Value;
+                }
+            }
+        }
+
+        /// <summary>
         /// 创建DbCommand
         /// </summary>
         /// <param name="cmdText"></param>
@@ -91,6 +116,10 @@ namespace Mqd.SqlHelper
             if (paras != null)
             {
                 cmd.Parameters.AddRange(paras);
+                if (cmd.CommandType == CommandType.StoredProcedure && !cmd.Parameters.Contains(_SPReturnValueName))
+                {
+                    cmd.Parameters.Add(CreateParameter(_SPReturnValueName, direction: ParameterDirection.ReturnValue));
+                }
             }
             if (tran != null)
             {
@@ -111,15 +140,51 @@ namespace Mqd.SqlHelper
                 {
                     conn.Open();
                     adapter.Fill(ds);
-                    Dispose(cmd);
                 }
                 catch (Exception e)
                 {
                     Dispose(cmd);
                     throw e;
                 }
+                if (cmd.CommandType == CommandType.StoredProcedure)
+                {
+                    SetSPReturnValue(cmd.Parameters);
+                }
+                Dispose(cmd);
             }
             return ds;
+        }
+
+        /// <summary>
+        /// 执行无查询命令
+        /// </summary>
+        /// <param name="sql">sql语句</param>
+        /// <param name="type">命令类型</param>
+        /// <param name="paras">参数集合</param>
+        /// <returns>返回影响记录数</returns>
+        private int ExecuteNonQuery(string sql, CommandType type = CommandType.Text, DbParameter[] paras = null)
+        {
+            int n = 0;
+            using (DbConnection conn = CreateConnection())
+            {
+                DbCommand cmd = CreateCommand(sql, conn, type: type, paras: paras);
+                try
+                {
+                    conn.Open();
+                    n = cmd.ExecuteNonQuery();
+                }
+                catch (Exception e)
+                {
+                    Dispose(cmd);
+                    throw e;
+                }
+                if (cmd.CommandType == CommandType.StoredProcedure)
+                {
+                    SetSPReturnValue(cmd.Parameters);
+                }
+                Dispose(cmd);
+            }
+            return n;
         }
 
         /// <summary>
@@ -129,6 +194,17 @@ namespace Mqd.SqlHelper
         public DbParameter CreateParameter()
         {
             return _factory.CreateParameter();
+        }
+
+        /// <summary>
+        /// 获取存储过程执行返回值
+        /// </summary>
+        public object SPReturnValue
+        {
+            get
+            {
+                return _SPReturnValue;
+            }
         }
 
         /// <summary>
@@ -146,7 +222,7 @@ namespace Mqd.SqlHelper
             DbParameter para = _factory.CreateParameter();
             para.ParameterName = paraName;
             para.Direction = direction;
-            para.Size = 0;
+            para.Size = size;
             para.Value = value;
             if ((int)type != -1)
             {
@@ -188,7 +264,7 @@ namespace Mqd.SqlHelper
         /// <param name="procedureName">存储过程名</param>
         /// <param name="paras">参数集合</param>
         /// <returns>返回查询到的数据</returns>
-        public DataTable ExecuteStoreProcedure(string procedureName, DbParameter[] paras = null)
+        public DataTable ExecStoreProcedure(string procedureName, DbParameter[] paras = null)
         {
             DataSet ds = Query(procedureName, CommandType.StoredProcedure, paras);
             if (ds.Tables.Count > 0)
@@ -199,6 +275,17 @@ namespace Mqd.SqlHelper
         }
 
         /// <summary>
+        /// 执行无查询存储过程
+        /// </summary>
+        /// <param name="procedureName">存储过程名</param>
+        /// <param name="paras">参数集合</param>
+        /// <returns></returns>
+        public void ExecNoQueryStoreProcedure(string procedureName, DbParameter[] paras = null)
+        {
+            ExecuteNonQuery(procedureName, type: CommandType.StoredProcedure, paras: paras);
+        }
+
+        /// <summary>
         /// 执行无查询
         /// </summary>
         /// <param name="sql">sql语句</param>
@@ -206,22 +293,7 @@ namespace Mqd.SqlHelper
         /// <returns>返回影响记录数</returns>
         public int ExecuteNonQuery(string sql, DbParameter[] paras = null)
         {
-            int n = 0;
-            using (DbConnection conn = CreateConnection())
-            {
-                DbCommand cmd = CreateCommand(sql, conn, paras: paras);
-                try
-                {
-                    conn.Open();
-                    n = cmd.ExecuteNonQuery();
-                }
-                catch (Exception e)
-                {
-                    Dispose(cmd);
-                    throw e;
-                }
-            }
-            return n;
+            return ExecuteNonQuery(sql, paras: paras);
         }
 
         /// <summary>
@@ -264,7 +336,7 @@ namespace Mqd.SqlHelper
                 }
             }
             string sql = string.Format("insert into {0}({1}) values({2})", t.Name, fields.Substring(1), values.Substring(1));
-            return ExecuteNonQuery(sql, paras.ToArray());
+            return ExecuteNonQuery(sql, paras: paras.ToArray());
         }
     }
 }

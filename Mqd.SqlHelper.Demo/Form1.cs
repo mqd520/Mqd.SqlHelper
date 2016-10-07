@@ -101,7 +101,7 @@ namespace Mqd.SqlHelper.Demo
 
         private void button5_Click(object sender, EventArgs e)
         {
-            DataTable dt = _db.ExecuteStoreProcedure("CustOrdersDetail", new DbParameter[]{
+            DataTable dt = _db.ExecStoreProcedure("CustOrdersDetail", new DbParameter[]{
                 _db.CreateParameter("@OrderID","10248")
             });
             Tool.FillListView(dt, listView1);
@@ -133,9 +133,25 @@ namespace Mqd.SqlHelper.Demo
                 _db.CreateParameter("@customerID",type:DbType.String,value:"AROUT"),
                 _db.CreateParameter("@count",type:DbType.Int32,direction:ParameterDirection.Output)
             };
-            DataTable dt = _db.ExecuteStoreProcedure("Customer1", paras);
+            DataTable dt = _db.ExecStoreProcedure("Customer1", paras);
             Tool.FillListView(dt, listView1);
             Console.WriteLine(paras[1].Value);
+        }
+
+        private void button9_Click(object sender, EventArgs e)
+        {
+            _db.ExecNoQueryStoreProcedure("CustOrdersDetail", new DbParameter[]{
+                _db.CreateParameter("@OrderID","10248")
+            });
+        }
+
+        private void button10_Click(object sender, EventArgs e)
+        {
+            DataTable dt = _db.ExecStoreProcedure("CustOrdersDetail", new DbParameter[]{
+                _db.CreateParameter("@OrderID","10248")
+            });
+            Tool.FillListView(dt, listView1);
+            MessageBox.Show("return = " + _db.SPReturnValue);
         }
     }
 }

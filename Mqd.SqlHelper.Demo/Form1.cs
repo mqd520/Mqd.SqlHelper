@@ -90,7 +90,7 @@ namespace Mqd.SqlHelper.Demo
         private void button3_Click(object sender, EventArgs e)
         {
             string sql = "update Categories set CategoryName=N'狼没来' where CategoryID=9";
-            int n = _db.ExecuteNonQuery(sql);
+            //int n = _db.ExecuteNonQuery(sql);
         }
 
         private void button4_Click(object sender, EventArgs e)
@@ -152,6 +152,14 @@ namespace Mqd.SqlHelper.Demo
             });
             Tool.FillListView(dt, listView1);
             MessageBox.Show("return = " + _db.SPReturnValue);
+        }
+
+        private void button11_Click(object sender, EventArgs e)
+        {
+            Db db = new Db("SqlConnectionString");
+            //DbParameter[] paras = db.DeriveParameters("DR_Report_Summary2");
+            DataTable dt = db.GetAll("GameUserInfo");
+            Tool.FillListView(dt, listView1);
         }
     }
 }

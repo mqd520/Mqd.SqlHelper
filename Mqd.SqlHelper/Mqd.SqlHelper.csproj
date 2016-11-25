@@ -49,13 +49,9 @@
   <ItemGroup>
     <Compile Include="Db.cs" />
     <Compile Include="Db1.cs" />
-    <Compile Include="DbAccess.cs" />
-    <Compile Include="DbCatagory.cs" />
     <Compile Include="DbCmdException.cs" />
     <Compile Include="DbConnException.cs" />
-    <Compile Include="IDbAccess.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="SqlServerDbAccess.cs" />
     <Compile Include="Tool.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

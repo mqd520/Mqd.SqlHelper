@@ -154,6 +154,13 @@ namespace Mqd.SqlHelper
             return cmd;
         }
 
+        /// <summary>
+        /// 查询数据
+        /// </summary>
+        /// <param name="sql">查询语句</param>
+        /// <param name="type">查询类型</param>
+        /// <param name="paras">参数列表</param>
+        /// <returns>返回查询数据</returns>
         public DataSet Query(string sql, CommandType type = CommandType.Text, DbParameter[] paras = null)
         {
             DataSet ds = new DataSet();

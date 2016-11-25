@@ -11,42 +11,8 @@ namespace Mqd.SqlHelper
     /// <summary>
     /// 
     /// </summary>
-    public sealed partial class Db : IDbAccess
+    public sealed partial class Db
     {
-        /// <summary>
-        /// 数据访问对象
-        /// </summary>
-        private IDbAccess _dbAccess;
-
-        /// <summary>
-        /// 初始化
-        /// </summary>
-        private void InitDbAccess()
-        {
-            switch (_css.ProviderName)
-            {
-                case "System.Data.SqlClient":
-                    _dbAccess = new SqlServerDbAccess();
-                    break;
-                case "System.Data.MySqlClient":
-                    _dbAccess = new DbAccess();
-                    break;
-                case "System.Data.OraclClient":
-                    _dbAccess = new DbAccess();
-                    break;
-                default:
-                    if (_css.ConnectionString.Contains("Provider"))
-                    {
-                        _dbAccess = new DbAccess();
-                    }
-                    else
-                    {
-                        _dbAccess = new DbAccess();
-                    }
-                    break;
-            }
-        }
-
         /// <summary>
         /// 创建DbParameter
         /// </summary>
@@ -126,74 +92,47 @@ namespace Mqd.SqlHelper
         }
 
         /// <summary>
-        /// 执行无查询
-        /// </summary>
-        /// <param name="sql">sql语句</param>
-        /// <param name="paras">参数集合</param>
-        /// <returns>返回影响记录数</returns>
-        public int ExecuteNonQuery(string sql, DbParameter[] paras = null)
-        {
-            return ExecuteNonQuery(sql, paras: paras);
-        }
-
-        /// <summary>
         /// 插入数据
         /// </summary>
         /// <typeparam name="T">实体类型</typeparam>
         /// <param name="entity">实体数据</param>
-        /// <param name="where">需要插入数据的字段</param>
-        /// <returns>返回影响记录数</returns>
-        public int Insert<T>(T entity, List<PropertyInfo> where = null)
+        /// <param name="where">筛选需要插入的字段</param>
+        /// <returns>返回受影响的记录条数</returns>
+        public int Insert<T>(T entity, Func<PropertyInfo, bool> where = null)
         {
             Type t = entity.GetType();
             PropertyInfo[] pis = t.GetProperties();
+            List<PropertyInfo> pResult = new List<PropertyInfo>();//属性筛选结果
             List<DbParameter> paras = new List<DbParameter>();
             string fields = "";
             string values = "";
-            foreach (var item in pis)
+            if (where != null)
             {
-                bool flag = false;
+                foreach (var item in pis)
+                {
+                    bool flag = where.Invoke(item);
+                    if (flag)
+                    {
+                        pResult.Add(item);
+                    }
+                }
+            }
+            else
+            {
+                pResult = pis.ToList();
+            }
+            foreach (var item in pResult)
+            {
                 object o = item.GetValue(entity);
-                if (o != null)
-                {
-                    if (where == null)
-                    {
-                        flag = true;
-                    }
-                    else if (where.Contains(item))
-                    {
-                        flag = true;
-                    }
-                }
-                if (flag)
-                {
-                    fields += string.Format(",[{0}]", item.Name);
-                    values += string.Format(",@{0}", item.Name);
-                    DbParameter para = CreateParameter();
-                    para.ParameterName = "@" + item.Name;
-                    para.Value = o;
-                    paras.Add(para);
-                }
+                fields += string.Format(",[{0}]", item.Name);
+                values += string.Format(",@{0}", item.Name);
+                DbParameter para = CreateParameter();
+                para.ParameterName = "@" + item.Name;
+                para.Value = o;
+                paras.Add(para);
             }
             string sql = string.Format("insert into [{0}]({1}) values({2})", t.Name, fields.Substring(1), values.Substring(1));
             return ExecuteNonQuery(sql, paras: paras.ToArray());
-        }
-
-        /// <summary>
-        /// 获取指定表所有记录
-        /// </summary>
-        /// <param name="table">表名</param>
-        /// <returns></returns>
-        public DataTable GetAll(string table)
-        {
-            string sql = string.Format("select * from {0}", table);
-            DataSet ds = Query(sql);
-            return ds.Tables.Count > 0 ? ds.Tables[0] : new DataTable();
-        }
-
-        public DataTable GetPagning(string table, int index, int size)
-        {
-            return new DataTable();
         }
     }
 }

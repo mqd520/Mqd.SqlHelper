@@ -41,7 +41,7 @@ namespace Mqd.SqlHelper.Demo
             ms.Read(buffer, 0, buffer.Length);
             ms.Close();
             string sql = "insert into Categories(CategoryName,Description,Picture) values(@CategoryName,@Description,@Picture)";
-            int n = _db.ExecuteNonQuery(sql, new DbParameter[]{
+            int n = _db.ExecuteNonQuery(sql, paras: new DbParameter[]{
                 _db.CreateParameter("@CategoryName","狼来了"),
                 _db.CreateParameter("@Description","狼来了"),
                 _db.CreateParameter("@Picture",buffer)
@@ -89,8 +89,9 @@ namespace Mqd.SqlHelper.Demo
 
         private void button3_Click(object sender, EventArgs e)
         {
-            string sql = "update Categories set CategoryName=N'狼没来' where CategoryID=9";
+            //string sql = "update Categories set CategoryName=N'狼没来' where CategoryID=9";
             //int n = _db.ExecuteNonQuery(sql);
+            //Console.WriteLine(n);
         }
 
         private void button4_Click(object sender, EventArgs e)
@@ -111,18 +112,18 @@ namespace Mqd.SqlHelper.Demo
         {
             int result = _db.Insert<Customers>(new Customers
             {
-                CustomerID = "hcdus",
+                CustomerID = "ghytn",
                 CompanyName = "CompanyName:djksjdksjdksj",
                 Address = "sdsdsds",
                 Country = "sdsdsds"
-            });
+            }, p => p.Name == "CustomerID" || p.Name == "CompanyName");
             Console.WriteLine(result);
         }
 
         private void button7_Click(object sender, EventArgs e)
         {
             string sql = "delete from Categories where CategoryID=@CategoryID";
-            int n = _db.ExecuteNonQuery(sql, new DbParameter[]{
+            int n = _db.ExecuteNonQuery(sql, paras: new DbParameter[]{
                 _db.CreateParameter("@CategoryID",14)
             });
         }
@@ -156,10 +157,13 @@ namespace Mqd.SqlHelper.Demo
 
         private void button11_Click(object sender, EventArgs e)
         {
-            Db db = new Db("SqlConnectionString");
-            //DbParameter[] paras = db.DeriveParameters("DR_Report_Summary2");
-            DataTable dt = db.GetAll("GameUserInfo");
-            Tool.FillListView(dt, listView1);
+            DbParameter[] paras = _db.DeriveParameters("CustOrderHist");
+            string result = "";
+            foreach (var item in paras)
+            {
+                result += string.Format("Name={0} Type={1}{2}", item.ParameterName, item.DbType.ToString(), Environment.NewLine);
+            }
+            MessageBox.Show(result);
         }
     }
 }

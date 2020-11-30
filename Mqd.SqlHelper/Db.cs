@@ -97,9 +97,9 @@ namespace Mqd.SqlHelper
             {
                 conn.Open();
             }
-            catch (Exception)
+            catch (Exception e)
             {
-                throw new DbConnException("数据库连接失败");
+                throw e;
             }
         }
 
@@ -173,10 +173,10 @@ namespace Mqd.SqlHelper
             {
                 adapter.Fill(ds);
             }
-            catch
+            catch(Exception e)
             {
                 Dispose(cmd);
-                throw new DbCmdException("数据库执行失败");
+                throw e;
             }
             if (cmd.CommandType == CommandType.StoredProcedure)
             {
@@ -203,10 +203,10 @@ namespace Mqd.SqlHelper
             {
                 n = cmd.ExecuteNonQuery();
             }
-            catch
+            catch(Exception e)
             {
                 Dispose(cmd);
-                throw new DbCmdException("数据库执行失败");
+                throw e;
             }
             if (cmd.CommandType == CommandType.StoredProcedure)
             {
